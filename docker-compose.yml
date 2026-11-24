@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: user-management-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: UserDetails
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d UserDetails"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: user-management-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    networks:
+      - backend
+    environment:
+      - DATABASE_URL=postgresql://admin:password123@db:5432/UserDetails
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    name: docker_user_registation_fastapi_backend
